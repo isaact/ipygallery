@@ -1,24 +1,24 @@
 import type { RenderProps } from "@anywidget/types";
+import { registerElements, type GalleryImage } from "vue-infinity";
 import "./widget.css";
 
 /* Specifies attributes defined with traitlets in ../src/ipygallery/__init__.py */
 interface WidgetModel {
-	value: number;
+	images: GalleryImage[];
 	/* Add your own */
 }
+registerElements();
 
 function render({ model, el }: RenderProps<WidgetModel>) {
-	let btn = document.createElement("button");
-	btn.innerHTML = `count is ${model.get("value")}`;
-	btn.addEventListener("click", () => {
-		model.set("value", model.get("value") + 1);
-		model.save_changes();
-	});
-	model.on("change:value", () => {
-		btn.innerHTML = `count is ${model.get("value")}`;
-	});
+	let gallery = document.createElement("gallery-ce");
+	gallery.updateImages(model.get("images"));
+	
+	// model.on("change:selectedImage", () => {
+	// 	gallery.setAttribute("selected-image", model.get("selectedImage"));
+	// });
+	el.appendChild(gallery);
+
 	el.classList.add("ipygallery");
-	el.appendChild(btn);
 }
 
 export default { render };
