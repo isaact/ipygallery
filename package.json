@@ -1,12 +1,15 @@
 {
 	"scripts": {
-		"dev": "npm run build -- --sourcemap=inline --watch",
-		"build": "esbuild js/widget.ts --minify --format=esm --bundle --outdir=src/ipygallery/static",
+		"dev": "vite build --watch",
+		"build": "vite build",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@anywidget/vue": "^0.1.0",
+		"@types/node": "^24.2.1",
 		"@vue/compiler-sfc": "^3.5.18",
 		"anywidget": "^0.9.18",
+		"vite": "^7.1.2",
 		"vue": "^3.5.18",
 		"vue-infinity": "^0.8.2"
 	},
