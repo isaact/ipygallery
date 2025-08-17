@@ -10,9 +10,13 @@
     :gap="gap"
     :verticalScroll="verticalScroll"
     :carouselStyle="carouselStyle"
+    @itemClick="handleImageClick"
   >
     <template #item="{ item, index }">
-      <div class="gallery-item" @click="handleImageClick(item, index)">
+      <div
+        class="gallery-item"
+        :class="{ selected: isSelected(item) }"
+      >
         <img
           :src="item.url"
           :alt="item.alt || ''"
@@ -45,13 +49,6 @@
       <p>Current Item: {{ lastScrolledToItemIndex }}</p>
     </div>
     
-    <!-- Full-screen modal -->
-    <div v-if="isModalOpen" class="modal-overlay" @click="isModalOpen = false">
-      <div class="modal-content" @click.stop>
-        <button class="close-button" @click="isModalOpen = false">&times;</button>
-        <img v-if="selectedImage" :src="selectedImage.url" class="modal-image" />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -74,15 +71,26 @@ const verticalScroll = useModelState<boolean>('verticalScroll');
 const carouselStyle = useModelState<Record<string, any>>('carouselStyle');
 const itemStyle = useModelState<Record<string, any>>('itemStyle');
 const lastScrolledToItemIndex = ref(0);
-const isModalOpen = ref(false);
-const selectedImage = ref<GalleryImage | null>(null);
+const selectedImages = ref<Set<string>>(new Set());
 
 // Handle image click event
-const handleImageClick = (event: CustomEvent, index: number) => {
-  console.log('Image clicked:', event);
-  const payload = event.detail[0];
-  selectedImage.value = payload.image;
-  isModalOpen.value = true;
+const handleImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
+  console.log('Image clicked:', payload);
+  const image = payload.item;
+
+  // Check if image is already selected
+  if (selectedImages.value.has(image.url)) {
+    // Image already selected, remove from selection
+    selectedImages.value.delete(image.url);
+  } else {
+    // Image not selected, add to selection
+    selectedImages.value.add(image.url);
+  }
+};
+
+// Check if an image is selected
+const isSelected = (image: GalleryImage) => {
+  return selectedImages.value.has(image.url);
 };
 
 const updateImages = (images: GalleryImage[]) => {
@@ -134,6 +142,11 @@ defineExpose({
   height: 100%;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.gallery-item.selected {
+  border: 3px solid #007bff;
+  border-radius: 8px;
 }
 
 .image-title {
