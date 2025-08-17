@@ -37,7 +37,6 @@
           <template #item="{ item, index }">
             <div
               class="gallery-item"
-              :class="{ selected: isSelected(item) }"
             >
               <img
                 :src="item.url"
@@ -75,8 +74,8 @@
       <!-- Selected Images Tab -->
       <div v-show="activeTab === 'selected-images'">
         <Carousel
-          v-if="selectedImagesArray.length > 0"
-          :items="selectedImagesArray"
+          v-if="selectedImages.length > 0"
+          :items="selectedImages"
           :height="height"
           :width="width"
           :numColsToShow="numColsToShow"
@@ -91,6 +90,7 @@
               <img
                 :src="item.url"
                 :alt="item.alt || ''"
+                :class="{ selected: selectedIndexes.includes(index) }"
                 class="gallery-image"
                 :style="itemStyle"
               />
@@ -124,6 +124,7 @@ import 'vue-infinity/style.css';
 const galleryRef = useTemplateRef('carouselRef')
 // const galleryItems = ref<GalleryImage[]>([]);
 const galleryItems = useModelState<GalleryImage[]>('images');
+const selectedIndexes = useModelState<number[]>('selectedIndexes');
 const numRowsToShow = useModelState<number>('numRows');
 const numColsToShow = useModelState<number>('numCols');
 const height = useModelState<string>('height');
@@ -133,11 +134,9 @@ const verticalScroll = useModelState<boolean>('verticalScroll');
 const carouselStyle = useModelState<Record<string, any>>('carouselStyle');
 const itemStyle = useModelState<Record<string, any>>('itemStyle');
 const lastScrolledToItemIndex = ref(0);
-const selectedImages = ref<Set<GalleryImage>>(new Set());
 
-// Computed property to convert selected images Set to Array
-const selectedImagesArray = computed(() => {
-  return Array.from(selectedImages.value);
+const selectedImages = computed(() : GalleryImage[] => {
+  return Array.from(selectedIndexes.value).map(index => galleryItems.value[index]);
 });
 
 // Active tab
@@ -146,32 +145,21 @@ const activeTab = ref('all-images');
 // Handle image click event
 const handleImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
   console.log('Image clicked:', payload);
-  const image = payload.item;
+  // const image = payload.item;
+  const indexes = selectedIndexes.value;
+  indexes.push(payload.index);
+  selectedIndexes.value = indexes;
+  console.log('Selected indexes updated:', selectedIndexes.value);
+  console.log('Selected images updated:', selectedImages.value);
 
-  // Check if image is already selected
-  if (selectedImages.value.has(image)) {
-    // Image already selected, remove from selection
-    selectedImages.value.delete(image);
-  } else {
-    // Image not selected, add to selection
-    selectedImages.value.add(image);
-  }
 };
 
 // Handle selected image click event (for the carousel in selected images tab)
 const handleSelectedImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
   console.log('Selected image clicked:', payload);
-  const image = payload.item;
-
-  // Remove from selection when clicked in selected images tab
-  if (selectedImages.value.has(image)) {
-    selectedImages.value.delete(image);
-  }
-};
-
-// Check if an image is selected
-const isSelected = (image: GalleryImage) => {
-  return selectedImages.value.has(image);
+  const indexes = selectedIndexes.value;
+  indexes.splice(indexes.indexOf(payload.index), 1);
+  selectedIndexes.value = indexes;
 };
 
 const updateImages = (images: GalleryImage[]) => {
