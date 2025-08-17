@@ -37,6 +37,7 @@
           <template #item="{ item, index }">
             <div
               class="gallery-item"
+              :class="{ selected: selectedIndexes.includes(index) }"
             >
               <img
                 :src="item.url"
@@ -90,7 +91,6 @@
               <img
                 :src="item.url"
                 :alt="item.alt || ''"
-                :class="{ selected: selectedIndexes.includes(index) }"
                 class="gallery-image"
                 :style="itemStyle"
               />
@@ -136,7 +136,9 @@ const itemStyle = useModelState<Record<string, any>>('itemStyle');
 const lastScrolledToItemIndex = ref(0);
 
 const selectedImages = computed(() : GalleryImage[] => {
-  return Array.from(selectedIndexes.value).map(index => galleryItems.value[index]);
+  return selectedIndexes.value
+    .filter(index => index >= 0 && index < galleryItems.value.length)
+    .map(index => galleryItems.value[index]);
 });
 
 // Active tab
@@ -146,9 +148,13 @@ const activeTab = ref('all-images');
 const handleImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
   console.log('Image clicked:', payload);
   // const image = payload.item;
-  const indexes = selectedIndexes.value;
-  indexes.push(payload.index);
-  selectedIndexes.value = indexes;
+  if (selectedIndexes.value.includes(payload.index)) {
+    const newIndexes = selectedIndexes.value.filter(index => index !== payload.index);
+    selectedIndexes.value = newIndexes;
+  } else {
+    const newIndexes = [...selectedIndexes.value, payload.index];
+    selectedIndexes.value = newIndexes;
+  }
   console.log('Selected indexes updated:', selectedIndexes.value);
   console.log('Selected images updated:', selectedImages.value);
 
@@ -157,9 +163,13 @@ const handleImageClick = (payload: { item: GalleryImage; index: number; element:
 // Handle selected image click event (for the carousel in selected images tab)
 const handleSelectedImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
   console.log('Selected image clicked:', payload);
-  const indexes = selectedIndexes.value;
-  indexes.splice(indexes.indexOf(payload.index), 1);
-  selectedIndexes.value = indexes;
+  // In the selected images carousel, the index refers to the position in selectedImages
+  // We need to remove the item at that position from selectedIndexes
+  if (payload.index >= 0 && payload.index < selectedIndexes.value.length) {
+    const newIndexes = [...selectedIndexes.value];
+    newIndexes.splice(payload.index, 1);
+    selectedIndexes.value = newIndexes;
+  }
 };
 
 const updateImages = (images: GalleryImage[]) => {
