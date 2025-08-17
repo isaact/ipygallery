@@ -71,7 +71,7 @@ const verticalScroll = useModelState<boolean>('verticalScroll');
 const carouselStyle = useModelState<Record<string, any>>('carouselStyle');
 const itemStyle = useModelState<Record<string, any>>('itemStyle');
 const lastScrolledToItemIndex = ref(0);
-const selectedImages = ref<Set<string>>(new Set());
+const selectedImages = ref<Set<GalleryImage>>(new Set());
 
 // Handle image click event
 const handleImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
@@ -79,18 +79,18 @@ const handleImageClick = (payload: { item: GalleryImage; index: number; element:
   const image = payload.item;
 
   // Check if image is already selected
-  if (selectedImages.value.has(image.url)) {
+  if (selectedImages.value.has(image)) {
     // Image already selected, remove from selection
-    selectedImages.value.delete(image.url);
+    selectedImages.value.delete(image);
   } else {
     // Image not selected, add to selection
-    selectedImages.value.add(image.url);
+    selectedImages.value.add(image);
   }
 };
 
 // Check if an image is selected
 const isSelected = (image: GalleryImage) => {
-  return selectedImages.value.has(image.url);
+  return selectedImages.value.has(image);
 };
 
 const updateImages = (images: GalleryImage[]) => {
