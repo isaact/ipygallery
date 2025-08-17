@@ -1,5 +1,5 @@
 <template>
-  <div class="gallery-container" style="background-color: red;">
+  <div class="gallery-container" style="background-color: transparent;">
     <Carousel
     ref="carouselRef"
     :items="galleryItems"
