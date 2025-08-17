@@ -6,6 +6,7 @@
 	},
 	"dependencies": {
 		"@anywidget/vue": "^0.1.0",
+		"@nuxt/ui": "^3.3.2",
 		"@types/node": "^24.2.1",
 		"@vue/compiler-sfc": "^3.5.18",
 		"anywidget": "^0.9.18",

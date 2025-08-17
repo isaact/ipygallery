@@ -1,59 +1,121 @@
 <template>
   <div class="gallery-container" style="background-color: transparent;">
-    <Carousel
-    ref="carouselRef"
-    :items="galleryItems"
-    :height="height"
-    :width="width"
-    :numColsToShow="numColsToShow"
-    :numRowsToShow="numRowsToShow"
-    :gap="gap"
-    :verticalScroll="verticalScroll"
-    :carouselStyle="carouselStyle"
-    @itemClick="handleImageClick"
-  >
-    <template #item="{ item, index }">
-      <div
-        class="gallery-item"
-        :class="{ selected: isSelected(item) }"
+    <!-- Custom Tabs -->
+    <div class="tabs">
+      <button 
+        class="tab-button" 
+        :class="{ active: activeTab === 'all-images' }"
+        @click="activeTab = 'all-images'"
       >
-        <img
-          :src="item.url"
-          :alt="item.alt || ''"
-          class="gallery-image"
-          :style="itemStyle"
-        />
-        <div v-if="item.title" class="image-title">
-          {{ item.title }}
-        </div>
-      </div>
-    </template>
-    <template #loading="{ index }">
-      <div class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <p>Loading image {{ index }}...</p>
-      </div>
-    </template>
-  </Carousel>
-    
-    <div class="controls">
-      <input
-        type="range"
-        min="0"
-        :max="galleryItems.length - 1"
-        v-model="lastScrolledToItemIndex"
-        @change="onSliderChange"
-        @input="onSliderInput"
-        class="slider"
-      />
-      <p>Current Item: {{ lastScrolledToItemIndex }}</p>
+        All Images
+      </button>
+      <button 
+        class="tab-button" 
+        :class="{ active: activeTab === 'selected-images' }"
+        @click="activeTab = 'selected-images'"
+      >
+        Selected Images
+      </button>
     </div>
     
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- All Images Tab -->
+      <div v-show="activeTab === 'all-images'">
+        <Carousel
+          ref="carouselRef"
+          :items="galleryItems"
+          :height="height"
+          :width="width"
+          :numColsToShow="numColsToShow"
+          :numRowsToShow="numRowsToShow"
+          :gap="gap"
+          :verticalScroll="verticalScroll"
+          :carouselStyle="carouselStyle"
+          @itemClick="handleImageClick"
+        >
+          <template #item="{ item, index }">
+            <div
+              class="gallery-item"
+              :class="{ selected: isSelected(item) }"
+            >
+              <img
+                :src="item.url"
+                :alt="item.alt || ''"
+                class="gallery-image"
+                :style="itemStyle"
+              />
+              <div v-if="item.title" class="image-title">
+                {{ item.title }}
+              </div>
+            </div>
+          </template>
+          <template #loading="{ index }">
+            <div class="loading-overlay">
+              <div class="loading-spinner"></div>
+              <p>Loading image {{ index }}...</p>
+            </div>
+          </template>
+        </Carousel>
+        
+        <div class="controls">
+          <input
+            type="range"
+            min="0"
+            :max="galleryItems.length - 1"
+            v-model="lastScrolledToItemIndex"
+            @change="onSliderChange"
+            @input="onSliderInput"
+            class="slider"
+          />
+          <p>Current Item: {{ lastScrolledToItemIndex }}</p>
+        </div>
+      </div>
+      
+      <!-- Selected Images Tab -->
+      <div v-show="activeTab === 'selected-images'">
+        <Carousel
+          v-if="selectedImagesArray.length > 0"
+          :items="selectedImagesArray"
+          :height="height"
+          :width="width"
+          :numColsToShow="numColsToShow"
+          :numRowsToShow="numRowsToShow"
+          :gap="gap"
+          :verticalScroll="verticalScroll"
+          :carouselStyle="carouselStyle"
+          @itemClick="handleSelectedImageClick"
+        >
+          <template #item="{ item, index }">
+            <div class="gallery-item selected">
+              <img
+                :src="item.url"
+                :alt="item.alt || ''"
+                class="gallery-image"
+                :style="itemStyle"
+              />
+              <div v-if="item.title" class="image-title">
+                {{ item.title }}
+              </div>
+            </div>
+          </template>
+          <template #loading="{ index }">
+            <div class="loading-overlay">
+              <div class="loading-spinner"></div>
+              <p>Loading image {{ index }}...</p>
+            </div>
+          </template>
+        </Carousel>
+        <div v-else class="no-selected-images">
+          <p>No images selected yet. Select images from the "All Images" tab.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, useTemplateRef } from 'vue';
+import { ref, onMounted, useTemplateRef, computed } from 'vue';
 import type { GalleryImage } from './types';
 import { useModelState } from "@anywidget/vue";
 import { Carousel } from 'vue-infinity';
@@ -73,6 +135,14 @@ const itemStyle = useModelState<Record<string, any>>('itemStyle');
 const lastScrolledToItemIndex = ref(0);
 const selectedImages = ref<Set<GalleryImage>>(new Set());
 
+// Computed property to convert selected images Set to Array
+const selectedImagesArray = computed(() => {
+  return Array.from(selectedImages.value);
+});
+
+// Active tab
+const activeTab = ref('all-images');
+
 // Handle image click event
 const handleImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
   console.log('Image clicked:', payload);
@@ -85,6 +155,17 @@ const handleImageClick = (payload: { item: GalleryImage; index: number; element:
   } else {
     // Image not selected, add to selection
     selectedImages.value.add(image);
+  }
+};
+
+// Handle selected image click event (for the carousel in selected images tab)
+const handleSelectedImageClick = (payload: { item: GalleryImage; index: number; element: HTMLElement }) => {
+  console.log('Selected image clicked:', payload);
+  const image = payload.item;
+
+  // Remove from selection when clicked in selected images tab
+  if (selectedImages.value.has(image)) {
+    selectedImages.value.delete(image);
   }
 };
 
@@ -248,5 +329,46 @@ defineExpose({
   max-width: 80vw;
   max-height: 80vh;
   object-fit: contain;
+}
+
+/* Custom Tabs Styles */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #475569;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.tab-content {
+  min-height: 300px;
+}
+
+.no-selected-images {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #64748b;
+  font-size: 16px;
 }
 </style>
